@@ -1,0 +1,2588 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Guido Administración | Consorcios en CABA</title>
+  <meta name="description" content="Administración profesional de consorcios en Buenos Aires. Gestión transparente, eficiente y cercana. Más de 10 años de experiencia.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,600&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=Playfair+Display:ital,wght@1,400;1,500&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="images/logo.png">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <style>
+    /* ============================================
+       CSS CUSTOM PROPERTIES & THEMING
+    ============================================ */
+    :root {
+      --navy: #1C2D4F;
+      --navy-light: #243563;
+      --gold: #B8962E;
+      --gold-light: #D4AF6A;
+      --gold-pale: #F0E6C8;
+      --cream: #FAFAF7;
+      --cream-2: #F2EDE5;
+      --text-primary: #1A1A1A;
+      --text-secondary: #4A4A4A;
+      --text-muted: #7A7A7A;
+      --border: rgba(184,150,46,0.2);
+      --shadow: 0 4px 32px rgba(28,45,79,0.10);
+      --shadow-lg: 0 16px 64px rgba(28,45,79,0.18);
+      --bg: var(--cream);
+      --bg-surface: var(--cream-2);
+      --bg-card: #FFFFFF;
+      --text: var(--text-primary);
+      --text-sub: var(--text-secondary);
+      --nav-bg: rgba(250,250,247,0.95);
+      --nav-border: rgba(184,150,46,0.15);
+      --overlay-text: #FFFFFF;
+      --transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+
+    [data-theme="dark"] {
+      --bg: #090F1E;
+      --bg-surface: #0E1829;
+      --bg-card: #121F35;
+      --text: #EEE8DC;
+      --text-sub: #C0B89A;
+      --text-primary: #EEE8DC;
+      --text-secondary: #C0B89A;
+      --text-muted: #8A8070;
+      --border: rgba(212,175,106,0.15);
+      --shadow: 0 4px 32px rgba(0,0,0,0.4);
+      --shadow-lg: 0 16px 64px rgba(0,0,0,0.55);
+      --nav-bg: rgba(9,15,30,0.97);
+      --nav-border: rgba(212,175,106,0.12);
+    }
+
+    /* ============================================
+       RESET & BASE
+    ============================================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html {
+      scroll-behavior: smooth;
+      font-size: 16px;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      transition: background 0.4s ease, color 0.4s ease;
+      overflow-x: hidden;
+    }
+
+    img { display: block; max-width: 100%; }
+    a { text-decoration: none; color: inherit; }
+    button { cursor: pointer; border: none; background: none; font-family: inherit; }
+
+    .container {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* ============================================
+       TYPOGRAPHY
+    ============================================ */
+    .display {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 600;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+    }
+
+    .serif-italic {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+    }
+
+    .section-tag {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .section-tag::before {
+      content: '';
+      display: inline-block;
+      width: 28px;
+      height: 1.5px;
+      background: var(--gold);
+    }
+
+    .section-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(2.2rem, 4vw, 3.4rem);
+      font-weight: 600;
+      line-height: 1.12;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      margin-bottom: 20px;
+    }
+
+    .section-subtitle {
+      font-size: 1.05rem;
+      line-height: 1.75;
+      color: var(--text-sub);
+      max-width: 560px;
+    }
+
+    /* ============================================
+       NAVIGATION
+    ============================================ */
+    #nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 1000;
+      background: var(--nav-bg);
+      border-bottom: 1px solid var(--nav-border);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      transition: var(--transition);
+    }
+
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 96px;
+      padding: 0 32px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+    }
+
+    .nav-logo img {
+      height: 96px;
+      width: auto;
+      object-fit: contain;
+    }
+
+    /* Logo — PNG con fondo transparente, funciona en ambos modos */
+    .logo-img {
+      mix-blend-mode: normal;
+      filter: drop-shadow(0 1px 2px rgba(0,0,0,0.12));
+    }
+
+    [data-theme="dark"] .logo-img {
+      filter: drop-shadow(0 1px 4px rgba(0,0,0,0.4)) brightness(1.05);
+    }
+
+    .nav-logo-text {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.15;
+    }
+
+    .nav-logo-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.35rem;
+      font-weight: 600;
+      color: var(--navy);
+      letter-spacing: 0.04em;
+    }
+
+    [data-theme="dark"] .nav-logo-name {
+      color: var(--gold-light);
+    }
+
+    .nav-logo-sub {
+      font-size: 0.62rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--gold);
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 36px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      font-size: 0.82rem;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-sub);
+      transition: color 0.25s;
+      position: relative;
+    }
+
+    .nav-links a::after {
+      content: '';
+      position: absolute;
+      bottom: -4px; left: 0; right: 0;
+      height: 1.5px;
+      background: var(--gold);
+      transform: scaleX(0);
+      transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      transform-origin: left;
+    }
+
+    .nav-links a:hover { color: var(--text); }
+    .nav-links a:hover::after { transform: scaleX(1); }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .btn-nav-cta {
+      background: var(--navy);
+      color: #fff;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 10px 22px;
+      border-radius: 3px;
+      transition: var(--transition);
+      white-space: nowrap;
+    }
+
+    [data-theme="dark"] .btn-nav-cta {
+      background: var(--gold);
+      color: var(--bg);
+    }
+
+    .btn-nav-cta:hover {
+      background: var(--gold);
+      color: var(--bg);
+    }
+
+    [data-theme="dark"] .btn-nav-cta:hover {
+      background: var(--gold-light);
+    }
+
+    /* Theme toggle */
+    .theme-toggle {
+      width: 42px;
+      height: 24px;
+      background: var(--bg-surface);
+      border: 1.5px solid var(--border);
+      border-radius: 50px;
+      position: relative;
+      transition: var(--transition);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .theme-toggle::after {
+      content: '';
+      position: absolute;
+      top: 2px; left: 2px;
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: var(--gold);
+      transition: var(--transition);
+    }
+
+    [data-theme="dark"] .theme-toggle::after {
+      transform: translateX(18px);
+      background: var(--gold-light);
+    }
+
+    .toggle-icon {
+      position: absolute;
+      font-size: 9px;
+      top: 50%;
+      transform: translateY(-50%);
+      pointer-events: none;
+    }
+
+    .toggle-sun { left: 4px; }
+    .toggle-moon { right: 4px; }
+
+    /* Hamburger */
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      padding: 6px;
+      cursor: pointer;
+    }
+
+    .hamburger span {
+      display: block;
+      width: 24px;
+      height: 1.5px;
+      background: var(--text);
+      transition: var(--transition);
+    }
+
+    .hamburger.open span:nth-child(1) { transform: translateY(6.5px) rotate(45deg); }
+    .hamburger.open span:nth-child(2) { opacity: 0; }
+    .hamburger.open span:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
+
+    /* Mobile menu */
+    .mobile-menu {
+      display: none;
+      position: fixed;
+      top: 72px; left: 0; right: 0; bottom: 0;
+      background: var(--bg);
+      z-index: 999;
+      padding: 40px 32px;
+      flex-direction: column;
+      gap: 24px;
+      overflow-y: auto;
+    }
+
+    .mobile-menu.open { display: flex; }
+
+    .mobile-menu a {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.9rem;
+      font-weight: 600;
+      color: var(--text);
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 20px;
+      transition: color 0.2s;
+    }
+
+    .mobile-menu a:hover { color: var(--gold); }
+
+    .mobile-menu-actions {
+      margin-top: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* ============================================
+       HERO SECTION
+    ============================================ */
+    #hero {
+      position: relative;
+      height: 100svh;
+      min-height: 580px;
+      overflow: hidden;
+    }
+
+    .hero-carousel {
+      position: absolute;
+      inset: 0;
+    }
+
+    .hero-slide {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .hero-slide.active { opacity: 1; }
+
+    .hero-slide img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scale(1.06);
+      transition: transform 7s ease-out;
+    }
+
+    .hero-slide.active img { transform: scale(1); }
+
+    .hero-slide img.pos-top { object-position: center 15%; }
+
+    /* Multi-layer overlay */
+    .hero-overlay {
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(to top, rgba(9,15,30,0.96) 0%, rgba(9,15,30,0.72) 45%, rgba(9,15,30,0.62) 100%);
+      z-index: 1;
+    }
+
+    .hero-content {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 0 0 80px;
+    }
+
+    .hero-text {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 48px;
+      width: 100%;
+    }
+
+    .hero-tag {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--gold-light);
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      opacity: 0;
+      animation: fadeUp 0.9s 0.3s ease forwards;
+    }
+
+    .hero-tag::before {
+      content: '';
+      width: 36px;
+      height: 1px;
+      background: var(--gold-light);
+    }
+
+    .hero-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(3rem, 7vw, 6.2rem);
+      font-weight: 600;
+      line-height: 1.04;
+      letter-spacing: -0.03em;
+      color: #fff;
+      margin-bottom: 24px;
+      opacity: 0;
+      animation: fadeUp 0.9s 0.5s ease forwards;
+    }
+
+    .hero-title em {
+      font-style: italic;
+      color: var(--gold-light);
+    }
+
+    .hero-desc {
+      font-size: 1.1rem;
+      color: rgba(255,255,255,0.75);
+      max-width: 520px;
+      line-height: 1.7;
+      margin-bottom: 40px;
+      opacity: 0;
+      animation: fadeUp 0.9s 0.7s ease forwards;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      opacity: 0;
+      animation: fadeUp 0.9s 0.9s ease forwards;
+    }
+
+    .btn-primary {
+      background: var(--gold);
+      color: #fff;
+      font-size: 0.82rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 16px 36px;
+      border-radius: 3px;
+      transition: var(--transition);
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-primary:hover {
+      background: var(--gold-light);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(184,150,46,0.4);
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: #fff;
+      font-size: 0.82rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 15px 36px;
+      border-radius: 3px;
+      border: 1.5px solid rgba(255,255,255,0.45);
+      transition: var(--transition);
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-outline:hover {
+      border-color: var(--gold-light);
+      color: var(--gold-light);
+    }
+
+    /* Hero indicators */
+    .hero-indicators {
+      position: absolute;
+      bottom: 32px;
+      right: 48px;
+      z-index: 3;
+      display: flex;
+      gap: 8px;
+    }
+
+    .hero-dot {
+      width: 28px;
+      height: 2px;
+      background: rgba(255,255,255,0.35);
+      border-radius: 2px;
+      cursor: pointer;
+      transition: all 0.4s ease;
+    }
+
+    .hero-dot.active {
+      background: var(--gold-light);
+      width: 48px;
+    }
+
+    /* Hero counter */
+    .hero-counter {
+      position: absolute;
+      top: 50%;
+      right: 48px;
+      transform: translateY(-50%);
+      z-index: 3;
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      color: rgba(255,255,255,0.45);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .hero-counter::before {
+      content: '';
+      width: 1px;
+      height: 48px;
+      background: rgba(255,255,255,0.2);
+    }
+
+    /* ============================================
+       STATS STRIP
+    ============================================ */
+    .stats-strip {
+      background: var(--navy);
+      padding: 48px 0;
+      margin-top: -1px;
+    }
+
+    [data-theme="dark"] .stats-strip {
+      background: var(--bg-surface);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0;
+    }
+
+    .stat-item {
+      text-align: center;
+      padding: 24px 16px;
+      position: relative;
+    }
+
+    .stat-item:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      top: 20%;
+      right: 0;
+      height: 60%;
+      width: 1px;
+      background: rgba(212,175,106,0.2);
+    }
+
+    .stat-number {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 3.2rem;
+      font-weight: 600;
+      color: var(--gold-light);
+      line-height: 1;
+      margin-bottom: 8px;
+      letter-spacing: -0.03em;
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(212,175,106,0.6);
+    }
+
+    /* ============================================
+       QUIÉNES SOMOS
+    ============================================ */
+    #quienes {
+      padding: 120px 0;
+      background: var(--bg);
+    }
+
+    .quienes-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      align-items: center;
+    }
+
+    .quienes-images {
+      position: relative;
+      height: 580px;
+    }
+
+    .quienes-img-main {
+      position: absolute;
+      top: 0; left: 0;
+      width: 75%;
+      height: 80%;
+      object-fit: cover;
+      border-radius: 4px;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .quienes-img-accent {
+      position: absolute;
+      bottom: 0; right: 0;
+      width: 55%;
+      height: 50%;
+      object-fit: cover;
+      border-radius: 4px;
+      box-shadow: var(--shadow-lg);
+      border: 4px solid var(--bg);
+    }
+
+    .quienes-img-badge {
+      position: absolute;
+      top: 50%;
+      left: 60%;
+      transform: translate(-50%, -50%);
+      background: var(--gold);
+      color: #fff;
+      padding: 20px 24px;
+      border-radius: 4px;
+      text-align: center;
+      box-shadow: 0 8px 32px rgba(184,150,46,0.4);
+      z-index: 10;
+    }
+
+    .quienes-img-badge .badge-num {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2.2rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .quienes-img-badge .badge-text {
+      font-size: 0.68rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      opacity: 0.85;
+    }
+
+    .quienes-content { padding: 16px 0; }
+
+    .quienes-text {
+      font-size: 1.05rem;
+      line-height: 1.8;
+      color: var(--text-sub);
+      margin-bottom: 20px;
+    }
+
+    .values-list {
+      list-style: none;
+      margin: 32px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .values-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      font-size: 0.95rem;
+      color: var(--text-sub);
+    }
+
+    .values-list .check {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: rgba(184,150,46,0.12);
+      border: 1.5px solid var(--gold);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+      color: var(--gold);
+      font-size: 11px;
+    }
+
+    /* ============================================
+       SERVICIOS
+    ============================================ */
+    #servicios {
+      padding: 120px 0;
+      background: var(--bg-surface);
+    }
+
+    .servicios-header {
+      text-align: center;
+      margin-bottom: 72px;
+    }
+
+    .servicios-header .section-tag {
+      justify-content: center;
+    }
+
+    .servicios-header .section-tag::before { display: none; }
+    .servicios-header .section-subtitle { margin: 0 auto; text-align: center; }
+
+    .servicios-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    .servicio-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 40px 36px;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .servicio-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 3px;
+      height: 0;
+      background: linear-gradient(to bottom, var(--gold), var(--gold-light));
+      transition: height 0.5s ease;
+    }
+
+    .servicio-card:hover {
+      transform: translateY(-6px);
+      box-shadow: var(--shadow-lg);
+      border-color: transparent;
+    }
+
+    .servicio-card:hover::before { height: 100%; }
+
+    .servicio-icon {
+      width: 52px;
+      height: 52px;
+      background: rgba(184,150,46,0.08);
+      border: 1.5px solid rgba(184,150,46,0.2);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 28px;
+      font-size: 22px;
+      transition: var(--transition);
+      color: var(--gold);
+    }
+
+    .servicio-card:hover .servicio-icon {
+      background: var(--gold);
+      border-color: var(--gold);
+      color: #fff;
+    }
+
+    .servicio-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.35rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 14px;
+      transition: color 0.3s;
+    }
+
+    .servicio-desc {
+      font-size: 0.9rem;
+      line-height: 1.75;
+      color: var(--text-sub);
+    }
+
+    /* ============================================
+       RESEÑAS
+    ============================================ */
+    #resenas {
+      padding: 120px 0;
+      background: var(--bg);
+      overflow: hidden;
+    }
+
+    .resenas-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 60px;
+    }
+
+    .resenas-rating-big {
+      text-align: right;
+    }
+
+    .resenas-rating-big .big-score {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 4rem;
+      font-weight: 700;
+      color: var(--gold);
+      line-height: 1;
+    }
+
+    .stars-row {
+      display: flex;
+      gap: 3px;
+      justify-content: flex-end;
+      margin: 6px 0;
+    }
+
+    .stars-row span {
+      color: var(--gold);
+      font-size: 16px;
+    }
+
+    .resenas-count {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      letter-spacing: 0.06em;
+    }
+
+    .resenas-track-wrap {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .resenas-track {
+      display: flex;
+      gap: 24px;
+      transition: transform 0.55s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+
+    .resena-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 32px 28px;
+      /* 3 cards visible: (100% - 2 gaps) / 3 */
+      flex: 0 0 calc((100% - 48px) / 3);
+      position: relative;
+    }
+
+    .resena-quote {
+      font-size: 3rem;
+      line-height: 0.6;
+      color: var(--gold);
+      opacity: 0.25;
+      font-family: Georgia, serif;
+      margin-bottom: 8px;
+    }
+
+    .resena-text {
+      font-size: 0.93rem;
+      line-height: 1.75;
+      color: var(--text-sub);
+      margin-bottom: 24px;
+    }
+
+    .resena-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .resena-author {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .resena-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 600;
+      font-size: 1rem;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    .resena-name {
+      font-weight: 600;
+      font-size: 0.88rem;
+      color: var(--text);
+    }
+
+    .resena-date {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .resena-stars { display: flex; gap: 2px; }
+    .resena-stars span { color: var(--gold); font-size: 13px; }
+
+    .resenas-controls {
+      display: flex;
+      gap: 12px;
+      margin-top: 40px;
+      justify-content: center;
+    }
+
+    .resenas-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 1.5px solid var(--border);
+      background: var(--bg-card);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: var(--transition);
+      color: var(--text);
+      font-size: 18px;
+    }
+
+    .resenas-btn:hover {
+      background: var(--gold);
+      border-color: var(--gold);
+      color: #fff;
+    }
+
+    /* ============================================
+       MAPA
+    ============================================ */
+    #mapa {
+      padding: 120px 0 0;
+      background: var(--bg-surface);
+    }
+
+    .mapa-header {
+      text-align: center;
+      margin-bottom: 64px;
+    }
+
+    .mapa-header .section-tag { justify-content: center; }
+    .mapa-header .section-tag::before { display: none; }
+    .mapa-header .section-subtitle { margin: 0 auto; text-align: center; }
+
+    #map-container {
+      width: 100%;
+      height: 560px;
+      position: relative;
+      overflow: hidden;
+      border-radius: 12px;
+    }
+
+    #leaflet-map {
+      width: 100%;
+      height: 100%;
+    }
+
+    .leaflet-tile-pane { filter: saturate(0.7) brightness(0.95); }
+    [data-theme="dark"] .leaflet-tile-pane { filter: saturate(0.7) brightness(0.85); }
+
+    /* ============================================
+       CONTACTO
+    ============================================ */
+    #contacto {
+      padding: 120px 0;
+      background: var(--bg);
+    }
+
+    .contacto-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      align-items: start;
+    }
+
+    .contacto-info {
+      padding-top: 8px;
+    }
+
+    .contacto-block {
+      margin-bottom: 36px;
+    }
+
+    .contacto-block-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 8px;
+    }
+
+    .contacto-block-val {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.55rem;
+      font-weight: 600;
+      color: var(--text);
+      transition: color 0.25s;
+    }
+
+    .contacto-block-val a:hover { color: var(--gold); }
+
+    .contacto-block-sub {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .wpp-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      background: #25D366;
+      color: #fff;
+      font-size: 0.88rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      padding: 14px 28px;
+      border-radius: 50px;
+      margin-top: 8px;
+      transition: var(--transition);
+    }
+
+    .wpp-cta:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(37,211,102,0.35);
+      background: #22c55e;
+    }
+
+    .wpp-cta svg { width: 20px; height: 20px; fill: #fff; }
+
+
+    /* Contact form */
+    .contact-form {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 48px 40px;
+    }
+
+    .form-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.8rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 32px;
+    }
+
+    .form-group {
+      margin-bottom: 22px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-sub);
+      margin-bottom: 8px;
+    }
+
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      border-radius: 4px;
+      padding: 13px 16px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.93rem;
+      color: var(--text);
+      transition: border-color 0.25s;
+      outline: none;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+      border-color: var(--gold);
+    }
+
+    .form-group textarea { resize: vertical; min-height: 120px; }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .form-submit {
+      width: 100%;
+      background: var(--navy);
+      color: #fff;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: var(--transition);
+      margin-top: 8px;
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    [data-theme="dark"] .form-submit { background: var(--gold); }
+
+    .form-submit:hover {
+      background: var(--gold);
+      transform: translateY(-1px);
+    }
+
+    [data-theme="dark"] .form-submit:hover { background: var(--gold-light); }
+
+    /* ============================================
+       FOOTER
+    ============================================ */
+    footer {
+      background: var(--navy);
+      color: rgba(212,175,106,0.5);
+      padding: 64px 0 32px;
+    }
+
+    [data-theme="dark"] footer {
+      background: #060C18;
+    }
+
+    /* Modo claro: textos del footer más visibles sobre el fondo navy */
+    [data-theme="light"] footer {
+      color: rgba(255,235,190,0.85);
+    }
+    [data-theme="light"] .footer-brand p,
+    [data-theme="light"] .footer-col ul li a {
+      color: rgba(255,235,190,0.72);
+    }
+    [data-theme="light"] .footer-col ul li a:hover {
+      color: #fff;
+    }
+    [data-theme="light"] .footer-bottom p {
+      color: rgba(255,235,190,0.5);
+    }
+    [data-theme="light"] .footer-bottom {
+      border-top-color: rgba(255,235,190,0.15);
+    }
+
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 48px;
+      margin-bottom: 52px;
+    }
+
+    .footer-brand img {
+      height: 96px;
+      filter: drop-shadow(0 1px 3px rgba(0,0,0,0.3));
+      margin-bottom: 20px;
+      opacity: 1;
+    }
+
+    .footer-brand p {
+      font-size: 0.88rem;
+      line-height: 1.75;
+      color: rgba(212,175,106,0.45);
+      max-width: 280px;
+    }
+
+    .footer-col h4 {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 20px;
+    }
+
+    .footer-col ul { list-style: none; }
+
+    .footer-col ul li {
+      margin-bottom: 12px;
+    }
+
+    .footer-col ul li a {
+      font-size: 0.88rem;
+      color: rgba(212,175,106,0.45);
+      transition: color 0.25s;
+    }
+
+    .footer-col ul li a:hover { color: var(--gold-light); }
+
+    .footer-bottom {
+      border-top: 1px solid rgba(212,175,106,0.1);
+      padding-top: 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .footer-bottom p {
+      font-size: 0.78rem;
+      color: rgba(212,175,106,0.3);
+    }
+
+    .footer-socials {
+      display: flex;
+      gap: 14px;
+    }
+
+    .footer-social-link {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 1px solid rgba(212,175,106,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(212,175,106,0.45);
+      font-size: 14px;
+      transition: var(--transition);
+      text-decoration: none;
+    }
+
+    .footer-social-link:hover {
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+
+    /* ============================================
+       FLOATING WHATSAPP BUTTON
+    ============================================ */
+    .float-wpp {
+      position: fixed;
+      bottom: 32px;
+      right: 32px;
+      z-index: 990;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: #25D366;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 6px 24px rgba(37,211,102,0.4);
+      transition: var(--transition);
+      text-decoration: none;
+    }
+
+    .float-wpp:hover {
+      transform: scale(1.12) translateY(-3px);
+      box-shadow: 0 12px 36px rgba(37,211,102,0.5);
+    }
+
+    .float-wpp svg {
+      width: 30px;
+      height: 30px;
+      fill: #fff;
+    }
+
+    .float-wpp-pulse {
+      position: absolute;
+      inset: -4px;
+      border-radius: 50%;
+      background: rgba(37,211,102,0.3);
+      animation: pulse 2.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 0.6; }
+      50% { transform: scale(1.2); opacity: 0; }
+    }
+
+    /* ============================================
+       ANIMATIONS & SCROLL REVEAL
+    ============================================ */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .reveal-left {
+      opacity: 0;
+      transform: translateX(-40px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+
+    .reveal-left.visible {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    .reveal-right {
+      opacity: 0;
+      transform: translateX(40px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+
+    .reveal-right.visible {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    .delay-1 { transition-delay: 0.1s; }
+    .delay-2 { transition-delay: 0.2s; }
+    .delay-3 { transition-delay: 0.3s; }
+    .delay-4 { transition-delay: 0.4s; }
+    .delay-5 { transition-delay: 0.5s; }
+
+    /* ============================================
+       GOLD DIVIDER
+    ============================================ */
+    .gold-divider {
+      width: 48px;
+      height: 2px;
+      background: linear-gradient(to right, var(--gold), var(--gold-light));
+      margin: 24px 0;
+    }
+
+    /* ============================================
+       FORM SUCCESS
+    ============================================ */
+    .form-success {
+      display: none;
+      text-align: center;
+      padding: 48px 0;
+    }
+
+    .form-success .success-icon {
+      font-size: 3rem;
+      margin-bottom: 16px;
+    }
+
+    .form-success h3 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.6rem;
+      margin-bottom: 12px;
+      color: var(--text);
+    }
+
+    .form-success p {
+      color: var(--text-sub);
+    }
+
+    /* ============================================
+       RESPONSIVE — TABLET (≤1024px)
+    ============================================ */
+    @media (max-width: 1024px) {
+      .servicios-grid { grid-template-columns: repeat(2, 1fr); }
+      .quienes-grid { gap: 48px; }
+      .footer-grid { grid-template-columns: 1fr 1fr; gap: 36px; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 0; }
+      .stat-item:nth-child(2)::after { display: none; }
+    }
+
+    /* ============================================
+       RESPONSIVE — MOBILE (≤768px)
+    ============================================ */
+    @media (max-width: 768px) {
+      /* Nav */
+      .nav-links { display: none; }
+      .btn-nav-cta { display: none; }
+      .hamburger { display: flex; }
+      .nav-inner { padding: 0 20px; height: 64px; }
+      .nav-logo img { height: 72px; }
+      .mobile-menu { top: 64px; padding-bottom: 100px; }
+
+      /* Hero */
+      .hero-text { padding: 0 20px; }
+      .hero-indicators { right: 20px; bottom: 24px; }
+      .hero-counter { display: none; }
+      .hero-tag { font-size: 0.65rem; letter-spacing: 0.12em; }
+      .hero-actions { gap: 12px; }
+      .btn-primary, .btn-outline { padding: 14px 28px; font-size: 0.85rem; }
+
+      /* Stats */
+      .stats-strip { padding: 32px 0; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 0; }
+      .stat-number { font-size: 2.6rem; }
+      .stat-label { font-size: 0.7rem; }
+
+      /* Quiénes */
+      .quienes-grid { grid-template-columns: 1fr; }
+      .quienes-images { height: 300px; order: -1; }
+      .quienes-img-main { width: 80%; }
+      .quienes-img-accent { width: 52%; height: 48%; }
+
+      /* Servicios */
+      .servicios-grid { grid-template-columns: 1fr; }
+      .servicio-card { padding: 28px 22px; }
+      .servicio-icon { width: 46px; height: 46px; }
+
+      /* Reseñas */
+      .resenas-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+      }
+      .resenas-rating-big { text-align: left; }
+      .big-score { font-size: 3rem; }
+      .stars-row { justify-content: flex-start; }
+      .resena-card {
+        flex: 0 0 calc((100% - 24px) / 2);
+        padding: 24px 20px;
+      }
+      .resena-text { font-size: 0.88rem; }
+
+      /* Mapa */
+      #map-container { height: 340px; }
+
+      /* Contacto */
+      .contacto-grid { grid-template-columns: 1fr; gap: 36px; }
+      .contact-form { padding: 28px 20px; }
+      .form-row { grid-template-columns: 1fr; }
+      .form-input, .form-textarea { padding: 12px 14px; font-size: 0.9rem; }
+      .contacto-block-val { font-size: 1.2rem; }
+
+      /* Footer */
+      .footer-grid { grid-template-columns: 1fr; gap: 28px; }
+      .footer-bottom { flex-direction: column; text-align: center; gap: 12px; }
+      footer { padding: 44px 0 28px; }
+      .footer-brand img { height: 72px; }
+      .footer-social-link { width: 32px; height: 32px; }
+
+      /* WhatsApp flotante */
+      .float-wpp {
+        bottom: max(20px, env(safe-area-inset-bottom, 20px));
+        right: 20px;
+        width: 52px;
+        height: 52px;
+      }
+      .float-wpp svg { width: 26px; height: 26px; }
+
+      .section-title { font-size: 2rem; }
+    }
+
+    /* ============================================
+       RESPONSIVE — MOBILE PEQUEÑO (≤480px)
+    ============================================ */
+    @media (max-width: 480px) {
+      /* Nav */
+      .nav-logo img { height: 60px; }
+
+      /* Hero */
+      .hero-title { font-size: 2.2rem; line-height: 1.15; }
+      .hero-desc { font-size: 0.9rem; line-height: 1.65; }
+      .hero-actions { flex-direction: column; align-items: flex-start; }
+      .btn-primary, .btn-outline {
+        width: 100%;
+        text-align: center;
+        justify-content: center;
+        padding: 15px 24px;
+      }
+
+      /* Stats */
+      .stat-number { font-size: 2.2rem; }
+      .stats-strip { padding: 24px 0; }
+
+      /* Reseñas: 1 card */
+      .resena-card { flex: 0 0 100%; padding: 22px 18px; }
+
+      /* Mapa */
+      #map-container { height: 280px; }
+
+      /* Contacto */
+      .contacto-block-val { font-size: 1.05rem; }
+
+      /* Footer */
+      .footer-brand img { height: 60px; }
+      footer { padding: 36px 0 24px; }
+    }
+
+    /* ============================================
+       RESPONSIVE — LANDSCAPE MOBILE
+    ============================================ */
+    @media (max-height: 500px) and (orientation: landscape) {
+      #hero { min-height: 100svh; }
+      .hero-title { font-size: 1.8rem; }
+      .hero-desc { display: none; }
+      .float-wpp { bottom: max(12px, env(safe-area-inset-bottom, 12px)); }
+    }
+
+    /* Separator ornament */
+    .ornament {
+      text-align: center;
+      margin: 0 auto 20px;
+      color: var(--gold);
+      font-size: 20px;
+      opacity: 0.5;
+      letter-spacing: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ============================================
+     NAVIGATION
+============================================ -->
+<nav id="nav">
+  <div class="nav-inner">
+    <a href="#hero" class="nav-logo">
+      <img src="images/logo.png" alt="Guido Administración" class="logo-img" onerror="this.style.display='none'">
+      <div class="nav-logo-text">
+        <span class="nav-logo-name">Guido</span>
+        <span class="nav-logo-sub">Administración</span>
+      </div>
+    </a>
+
+    <ul class="nav-links">
+      <li><a href="#quienes">Quiénes Somos</a></li>
+      <li><a href="#servicios">Servicios</a></li>
+      <li><a href="#resenas">Reseñas</a></li>
+      <li><a href="#mapa">Edificios</a></li>
+      <li><a href="#contacto">Contacto</a></li>
+    </ul>
+
+    <div class="nav-actions">
+      <button class="theme-toggle" id="themeToggle" aria-label="Cambiar modo">
+        <span class="toggle-icon toggle-sun">☀</span>
+        <span class="toggle-icon toggle-moon">☽</span>
+      </button>
+      <a href="#contacto" class="btn-nav-cta">Contacto</a>
+      <button class="hamburger" id="hamburger" aria-label="Menú">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- Mobile menu -->
+<div class="mobile-menu" id="mobileMenu">
+  <a href="#quienes" class="mobile-link">Quiénes Somos</a>
+  <a href="#servicios" class="mobile-link">Servicios</a>
+  <a href="#resenas" class="mobile-link">Reseñas</a>
+  <a href="#mapa" class="mobile-link">Edificios</a>
+  <a href="#contacto" class="mobile-link">Contacto</a>
+  <div class="mobile-menu-actions">
+    <a href="tel:08102200066" class="btn-primary" style="justify-content:center;">0810 220 0066</a>
+    <a href="https://wa.me/5491138166153?text=Hola%2C%20quisiera%20informaci%C3%B3n%20sobre%20administraci%C3%B3n%20de%20consorcios." class="wpp-cta" target="_blank" rel="noopener" style="border-radius:4px;">
+      <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+      WhatsApp
+    </a>
+  </div>
+</div>
+
+<!-- ============================================
+     HERO
+============================================ -->
+<section id="hero">
+  <div class="hero-carousel" id="heroCarousel">
+    <div class="hero-slide active">
+      <img src="images/slide1.jpg" alt="Edificios de Buenos Aires" loading="eager">
+    </div>
+    <div class="hero-slide">
+      <img src="images/slide3.jpg" alt="Casa Rosada Buenos Aires" loading="lazy">
+    </div>
+    <div class="hero-slide">
+      <img src="images/slide2.jpg" alt="Puerto Madero" loading="lazy">
+    </div>
+    <div class="hero-slide">
+      <img src="images/slide6.jpg" alt="Obelisco Buenos Aires" loading="lazy" class="pos-top">
+    </div>
+    <div class="hero-slide">
+      <img src="images/slide7.webp" alt="Congreso Nacional Buenos Aires" loading="lazy" class="pos-top">
+    </div>
+  </div>
+
+  <div class="hero-overlay"></div>
+
+  <div class="hero-content">
+    <div class="hero-text">
+      <p class="hero-tag">Administración Profesional de Consorcios · CABA</p>
+      <h1 class="hero-title">
+        Su consorcio,<br>
+        <em>en las mejores manos.</em>
+      </h1>
+      <p class="hero-desc">
+        Gestionamos su edificio con transparencia, tecnología y compromiso.
+        Más de una década administrando consorcios en Buenos Aires.
+      </p>
+      <div class="hero-actions">
+        <a href="#contacto" class="btn-primary">
+          Consultar ahora
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </a>
+        <a href="#servicios" class="btn-outline">Ver servicios</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-indicators" id="heroIndicators"></div>
+  <div class="hero-counter" id="heroCounter">01 / 05</div>
+</section>
+
+<!-- ============================================
+     STATS
+============================================ -->
+<div class="stats-strip">
+  <div class="container">
+    <div class="stats-grid">
+      <div class="stat-item">
+        <div class="stat-number" data-target="100">0</div>
+        <div class="stat-label">Edificios administrados</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number" data-target="10">0</div>
+        <div class="stat-label">Años de experiencia</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number" data-target="3500">0</div>
+        <div class="stat-label">Propietarios satisfechos</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number" data-target="98">0</div>
+        <div class="stat-label">% Satisfacción</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================
+     QUIÉNES SOMOS
+============================================ -->
+<section id="quienes">
+  <div class="container">
+    <div class="quienes-grid">
+      <div class="quienes-images reveal-left">
+        <img src="images/slide1.jpg" alt="Edificios de Buenos Aires" class="quienes-img-main">
+        <img src="images/slide5.jpg" alt="Arquitectura porteña" class="quienes-img-accent">
+        <div class="quienes-img-badge">
+          <div class="badge-num">+10</div>
+          <div class="badge-text">años de<br>experiencia</div>
+        </div>
+      </div>
+
+      <div class="quienes-content reveal-right">
+        <p class="section-tag">Quiénes Somos</p>
+        <h2 class="section-title">Administración comprometida con <em style="font-style:italic;color:var(--gold)">cada consorcio.</em></h2>
+        <div class="gold-divider"></div>
+        <p class="quienes-text">
+          En <strong>Guido Administración</strong> llevamos más de una década gestionando edificios de propiedad horizontal en la Ciudad de Buenos Aires. Somos un equipo de profesionales apasionados por brindar un servicio transparente, eficiente y personalizado.
+        </p>
+        <p class="quienes-text">
+          Entendemos que cada consorcio es único. Por eso, trabajamos codo a codo con propietarios, inquilinos y consejos de administración para garantizar el buen funcionamiento, la valorización del patrimonio y la convivencia armoniosa.
+        </p>
+        <ul class="values-list">
+          <li>
+            <span class="check">✓</span>
+            <span><strong>Transparencia total</strong> — Rendición de cuentas mensual detallada y accesible para todos los copropietarios.</span>
+          </li>
+          <li>
+            <span class="check">✓</span>
+            <span><strong>Gestión ágil</strong> — Respuesta rápida ante emergencias y resolución proactiva de problemas.</span>
+          </li>
+          <li>
+            <span class="check">✓</span>
+            <span><strong>Equipo matriculado</strong> — Administradores habilitados y actualizados en la normativa vigente.</span>
+          </li>
+          <li>
+            <span class="check">✓</span>
+            <span><strong>Tecnología aplicada</strong> — Portal online para propietarios, expensas digitales y comunicación directa.</span>
+          </li>
+          <li>
+            <span class="check">✓</span>
+            <span><strong>Visita mensual presencial</strong> — Inspeccionamos cada edificio mes a mes: seguridad, higiene e instalaciones, con informe al consorcio.</span>
+          </li>
+        </ul>
+        <a href="#contacto" class="btn-primary" style="display:inline-flex;margin-top:8px;">
+          Contactarnos
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================
+     SERVICIOS
+============================================ -->
+<section id="servicios">
+  <div class="container">
+    <div class="servicios-header reveal">
+      <p class="section-tag">Lo que hacemos</p>
+      <h2 class="section-title">Nuestros Servicios</h2>
+      <p class="section-subtitle">Cobertura integral para la administración de su edificio, con estándares profesionales y atención personalizada.</p>
+    </div>
+
+    <div class="servicios-grid">
+      <div class="servicio-card reveal delay-1">
+        <div class="servicio-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+        </div>
+        <h3 class="servicio-title">Administración de Expensas</h3>
+        <p class="servicio-desc">Liquidación mensual detallada, gestión de cobros, control presupuestario y rendición de cuentas transparente ante la asamblea.</p>
+      </div>
+      <div class="servicio-card reveal delay-2">
+        <div class="servicio-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+        </div>
+        <h3 class="servicio-title">Gestión de Mantenimiento</h3>
+        <p class="servicio-desc">Coordinación de reparaciones, mantenimiento preventivo, seguimiento de proveedores y resolución de urgencias las 24 horas.</p>
+      </div>
+      <div class="servicio-card reveal delay-3">
+        <div class="servicio-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        </div>
+        <h3 class="servicio-title">Asesoramiento Legal y Mediación</h3>
+        <p class="servicio-desc">Asesoría en el Reglamento de Copropiedad, redacción de actas y cumplimiento normativo. Mediación profesional en conflictos entre copropietarios para garantizar la convivencia armoniosa.</p>
+      </div>
+      <div class="servicio-card reveal delay-1">
+        <div class="servicio-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/><circle cx="12" cy="7" r="1" fill="currentColor"/></svg>
+        </div>
+        <h3 class="servicio-title">Visita Mensual al Edificio</h3>
+        <p class="servicio-desc">Recorrida presencial mensual para verificar el estado general del edificio: seguridad, higiene, instalaciones y espacios comunes. Informe detallado al consorcio con cada visita.</p>
+      </div>
+      <div class="servicio-card reveal delay-2">
+        <div class="servicio-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        </div>
+        <h3 class="servicio-title">Control de Proveedores</h3>
+        <p class="servicio-desc">Selección rigurosa, contratación y supervisión de proveedores de limpieza, seguridad, plomería, electricidad y más.</p>
+      </div>
+      <div class="servicio-card reveal delay-3">
+        <div class="servicio-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </div>
+        <h3 class="servicio-title">Comunicación Directa</h3>
+        <p class="servicio-desc">Canal permanente con propietarios vía portal web, WhatsApp y correo. Asambleas ordinarias y extraordinarias gestionadas por nosotros.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================
+     RESEÑAS
+============================================ -->
+<section id="resenas">
+  <div class="container">
+    <div class="resenas-header">
+      <div class="reveal">
+        <p class="section-tag">Opiniones</p>
+        <h2 class="section-title">Lo que dicen<br>nuestros propietarios</h2>
+      </div>
+      <div class="resenas-rating-big reveal">
+        <div class="big-score">5.0</div>
+        <div class="stars-row">
+          <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
+        </div>
+        <div class="resenas-count">17 reseñas · Google</div>
+      </div>
+    </div>
+
+    <div class="resenas-track-wrap">
+      <div class="resenas-track" id="resenasTrack">
+
+        <div class="resena-card">
+          <div class="resena-quote">"</div>
+          <p class="resena-text">Llevamos 3 años con Guido Administración y la diferencia es notable. Las expensas siempre claras, las reparaciones se resuelven rápido y siempre hay alguien disponible. 100% recomendados.</p>
+          <div class="resena-footer">
+            <div class="resena-author">
+              <div class="resena-avatar" style="background:#1C2D4F;">ML</div>
+              <div>
+                <div class="resena-name">Marcela López</div>
+                <div class="resena-date">Febrero 2025</div>
+              </div>
+            </div>
+            <div class="resena-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>
+          </div>
+        </div>
+
+        <div class="resena-card">
+          <div class="resena-quote">"</div>
+          <p class="resena-text">Excelente administración. Antes teníamos problemas con proveedores y las cuentas eran un caos. Desde que están ellos, todo fluye. Muy profesionales y atentos.</p>
+          <div class="resena-footer">
+            <div class="resena-author">
+              <div class="resena-avatar" style="background:#B8962E;">RG</div>
+              <div>
+                <div class="resena-name">Ricardo González</div>
+                <div class="resena-date">Enero 2025</div>
+              </div>
+            </div>
+            <div class="resena-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>
+          </div>
+        </div>
+
+        <div class="resena-card">
+          <div class="resena-quote">"</div>
+          <p class="resena-text">Responden al instante por WhatsApp, las rendiciones llegan puntualmente y cualquier problema que surge lo solucionan en 24 horas. Un lujo tenerlos.</p>
+          <div class="resena-footer">
+            <div class="resena-author">
+              <div class="resena-avatar" style="background:#243563;">SF</div>
+              <div>
+                <div class="resena-name">Sofía Fernández</div>
+                <div class="resena-date">Marzo 2025</div>
+              </div>
+            </div>
+            <div class="resena-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>
+          </div>
+        </div>
+
+        <div class="resena-card">
+          <div class="resena-quote">"</div>
+          <p class="resena-text">Cambié de administración y fue la mejor decisión. En el edificio de Palermo que tengo, todo mejoró: limpieza, transparencia en los gastos y muy buena relación con los vecinos.</p>
+          <div class="resena-footer">
+            <div class="resena-author">
+              <div class="resena-avatar" style="background:#5C3D2E;">JM</div>
+              <div>
+                <div class="resena-name">Jorge Martínez</div>
+                <div class="resena-date">Diciembre 2024</div>
+              </div>
+            </div>
+            <div class="resena-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>
+          </div>
+        </div>
+
+        <div class="resena-card">
+          <div class="resena-quote">"</div>
+          <p class="resena-text">El equipo de Guido es muy profesional. Nos ayudaron con una situación complicada entre vecinos y la resolvieron con mucha diplomacia. Muy recomendables.</p>
+          <div class="resena-footer">
+            <div class="resena-author">
+              <div class="resena-avatar" style="background:#2D5016;">AR</div>
+              <div>
+                <div class="resena-name">Ana Rodríguez</div>
+                <div class="resena-date">Noviembre 2024</div>
+              </div>
+            </div>
+            <div class="resena-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>
+          </div>
+        </div>
+
+        <div class="resena-card">
+          <div class="resena-quote">"</div>
+          <p class="resena-text">Tenemos un consorcio de 40 departamentos y la administración nunca fue tan ordenada. Las asambleas son puntuales, las actas llegan al instante y los proveedores son de primera.</p>
+          <div class="resena-footer">
+            <div class="resena-author">
+              <div class="resena-avatar" style="background:#4A1942;">CP</div>
+              <div>
+                <div class="resena-name">Carlos Peralta</div>
+                <div class="resena-date">Octubre 2024</div>
+              </div>
+            </div>
+            <div class="resena-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>
+          </div>
+        </div>
+
+        <div class="resena-card">
+          <div class="resena-quote">"</div>
+          <p class="resena-text">Nunca pensé que la administración de un consorcio podía ser tan eficiente. Desde el primer día el cambio fue notorio. Gracias al equipo de Guido por su dedicación.</p>
+          <div class="resena-footer">
+            <div class="resena-author">
+              <div class="resena-avatar" style="background:#1C2D4F;">LB</div>
+              <div>
+                <div class="resena-name">Laura Benitez</div>
+                <div class="resena-date">Septiembre 2024</div>
+              </div>
+            </div>
+            <div class="resena-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>
+          </div>
+        </div>
+
+        <div class="resena-card">
+          <div class="resena-quote">"</div>
+          <p class="resena-text">Llevo viviendo en el edificio 8 años y los últimos 2 con Guido Administración han sido los mejores. El edificio está impecable y los costos son razonables y justificados.</p>
+          <div class="resena-footer">
+            <div class="resena-author">
+              <div class="resena-avatar" style="background:#B8962E;">MT</div>
+              <div>
+                <div class="resena-name">Martín Torres</div>
+                <div class="resena-date">Agosto 2024</div>
+              </div>
+            </div>
+            <div class="resena-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>
+          </div>
+        </div>
+
+        <div class="resena-card">
+          <div class="resena-quote">"</div>
+          <p class="resena-text">Administran el edificio de mi madre en Belgrano y estamos muy conformes. Se manejan con mucha seriedad y siempre dan respuesta. Excelente servicio.</p>
+          <div class="resena-footer">
+            <div class="resena-author">
+              <div class="resena-avatar" style="background:#243563;">VA</div>
+              <div>
+                <div class="resena-name">Valentina Ávila</div>
+                <div class="resena-date">Julio 2024</div>
+              </div>
+            </div>
+            <div class="resena-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>
+          </div>
+        </div>
+
+        <div class="resena-card">
+          <div class="resena-quote">"</div>
+          <p class="resena-text">Muy buena experiencia. Nos dieron el número de emergencias y lo usamos una vez a las 11 de la noche por una pérdida de agua. En 30 minutos tenían un plomero en el edificio.</p>
+          <div class="resena-footer">
+            <div class="resena-author">
+              <div class="resena-avatar" style="background:#5C3D2E;">PR</div>
+              <div>
+                <div class="resena-name">Pablo Ramírez</div>
+                <div class="resena-date">Junio 2024</div>
+              </div>
+            </div>
+            <div class="resena-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>
+          </div>
+        </div>
+
+        <div class="resena-card">
+          <div class="resena-quote">"</div>
+          <p class="resena-text">La transparencia en los gastos es increíble. Cada peso queda registrado y podemos consultarlo cuando queramos. Eso da mucha tranquilidad como propietario.</p>
+          <div class="resena-footer">
+            <div class="resena-author">
+              <div class="resena-avatar" style="background:#2D5016;">GC</div>
+              <div>
+                <div class="resena-name">Gabriela Castro</div>
+                <div class="resena-date">Mayo 2024</div>
+              </div>
+            </div>
+            <div class="resena-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>
+          </div>
+        </div>
+
+        <div class="resena-card">
+          <div class="resena-quote">"</div>
+          <p class="resena-text">Llevo siendo propietario 15 años y he pasado por 4 administraciones. Guido es la mejor con diferencia. Organización, respuesta y calidad humana. No cambio más.</p>
+          <div class="resena-footer">
+            <div class="resena-author">
+              <div class="resena-avatar" style="background:#4A1942;">EM</div>
+              <div>
+                <div class="resena-name">Eduardo Morales</div>
+                <div class="resena-date">Abril 2024</div>
+              </div>
+            </div>
+            <div class="resena-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>
+          </div>
+        </div>
+
+        <div class="resena-card">
+          <div class="resena-quote">"</div>
+          <p class="resena-text">El portal de propietarios es muy práctico. Puedo ver mis expensas, el estado del edificio y contactar al administrador desde el celular. Moderno y fácil de usar.</p>
+          <div class="resena-footer">
+            <div class="resena-author">
+              <div class="resena-avatar" style="background:#1C2D4F;">CN</div>
+              <div>
+                <div class="resena-name">Claudia Navarro</div>
+                <div class="resena-date">Marzo 2024</div>
+              </div>
+            </div>
+            <div class="resena-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>
+          </div>
+        </div>
+
+        <div class="resena-card">
+          <div class="resena-quote">"</div>
+          <p class="resena-text">Antes de Guido, la limpieza del consorcio era un desastre. Hoy el edificio está siempre impecable. Cambiaron a los proveedores y la diferencia es enorme. Muy recomendados.</p>
+          <div class="resena-footer">
+            <div class="resena-author">
+              <div class="resena-avatar" style="background:#B8962E;">HP</div>
+              <div>
+                <div class="resena-name">Héctor Ponce</div>
+                <div class="resena-date">Febrero 2024</div>
+              </div>
+            </div>
+            <div class="resena-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>
+          </div>
+        </div>
+
+        <div class="resena-card">
+          <div class="resena-quote">"</div>
+          <p class="resena-text">Muy profesionales. Gestionaron el seguro del edificio de forma excelente cuando tuvimos un siniestro. Estuvieron presentes en todo momento y resolvieron todo sin estrés para nosotros.</p>
+          <div class="resena-footer">
+            <div class="resena-author">
+              <div class="resena-avatar" style="background:#243563;">IS</div>
+              <div>
+                <div class="resena-name">Irene Sánchez</div>
+                <div class="resena-date">Enero 2024</div>
+              </div>
+            </div>
+            <div class="resena-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>
+          </div>
+        </div>
+
+        <div class="resena-card">
+          <div class="resena-quote">"</div>
+          <p class="resena-text">Las asambleas son un ejemplo de organización. Orden del día claro, se respetan los tiempos, y las decisiones quedan registradas al instante. Muy eficientes.</p>
+          <div class="resena-footer">
+            <div class="resena-author">
+              <div class="resena-avatar" style="background:#5C3D2E;">DV</div>
+              <div>
+                <div class="resena-name">Diego Villanueva</div>
+                <div class="resena-date">Diciembre 2023</div>
+              </div>
+            </div>
+            <div class="resena-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>
+          </div>
+        </div>
+
+        <div class="resena-card">
+          <div class="resena-quote">"</div>
+          <p class="resena-text">Tengo dos departamentos en distintos edificios que administran ellos y en los dos la experiencia es impecable. Coherencia en el trabajo, seriedad y calidez humana. Los mejores.</p>
+          <div class="resena-footer">
+            <div class="resena-author">
+              <div class="resena-avatar" style="background:#2D5016;">NF</div>
+              <div>
+                <div class="resena-name">Natalia Figueroa</div>
+                <div class="resena-date">Noviembre 2023</div>
+              </div>
+            </div>
+            <div class="resena-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="resenas-controls">
+      <button class="resenas-btn" id="resenaPrev" aria-label="Anterior">←</button>
+      <button class="resenas-btn" id="resenaNext" aria-label="Siguiente">→</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================
+     MAPA
+============================================ -->
+<section id="mapa">
+  <div class="container">
+    <div class="mapa-header reveal">
+      <p class="section-tag">Nuestros Edificios</p>
+      <h2 class="section-title">Presencia en CABA y GBA</h2>
+      <p class="section-subtitle">Administramos edificios en los mejores barrios de la Ciudad de Buenos Aires y el Gran Buenos Aires.</p>
+    </div>
+  </div>
+  <div id="map-container">
+    <div id="leaflet-map"></div>
+  </div>
+</section>
+
+<!-- ============================================
+     CONTACTO
+============================================ -->
+<section id="contacto">
+  <div class="container">
+    <div style="text-align:center;margin-bottom:72px;" class="reveal">
+      <p class="section-tag" style="justify-content:center;"><span style="display:none"></span>Contacto</p>
+      <h2 class="section-title">Hablemos de su <em style="font-style:italic;color:var(--gold)">consorcio</em></h2>
+      <p class="section-subtitle" style="margin:0 auto;text-align:center;">Estamos listos para acompañarlo. Escríbanos, llámenos o complete el formulario y nos comunicamos a la brevedad.</p>
+    </div>
+
+    <div class="contacto-grid">
+      <div class="contacto-info reveal-left">
+        <div class="contacto-block">
+          <div class="contacto-block-label">Teléfono</div>
+          <div class="contacto-block-val"><a href="tel:08102200066">0810 220 0066</a></div>
+          <div class="contacto-block-sub">Lunes a viernes de 9 a 18 hs</div>
+        </div>
+
+        <div class="contacto-block">
+          <div class="contacto-block-label">Correo Electrónico</div>
+          <div class="contacto-block-val"><a href="mailto:guido.consorcios@gmail.com">guido.consorcios@gmail.com</a></div>
+          <div class="contacto-block-sub">Respondemos en menos de 24 horas</div>
+        </div>
+
+        <div class="contacto-block">
+          <div class="contacto-block-label">WhatsApp</div>
+          <div class="contacto-block-sub" style="margin-bottom:10px;">Escribinos directamente para una respuesta inmediata</div>
+          <a href="https://wa.me/5491138166153?text=Hola%2C%20quisiera%20m%C3%A1s%20informaci%C3%B3n%20sobre%20la%20administraci%C3%B3n%20de%20mi%20consorcio." class="wpp-cta" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+            Escribir por WhatsApp
+          </a>
+        </div>
+
+      </div>
+
+      <div class="reveal-right">
+        <div class="contact-form">
+          <h3 class="form-title">Envíenos un mensaje</h3>
+          <form id="contactoForm" name="contacto" method="POST" data-netlify="true" novalidate>
+            <input type="hidden" name="form-name" value="contacto">
+            <div id="formFields">
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="nombre">Nombre</label>
+                  <input type="text" id="nombre" name="nombre" placeholder="Su nombre" required>
+                </div>
+                <div class="form-group">
+                  <label for="apellido">Apellido</label>
+                  <input type="text" id="apellido" name="apellido" placeholder="Su apellido" required>
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="email">Correo electrónico</label>
+                <input type="email" id="email" name="email" placeholder="correo@ejemplo.com" required>
+              </div>
+              <div class="form-group">
+                <label for="telefono">Teléfono</label>
+                <input type="tel" id="telefono" name="telefono" placeholder="+54 11 XXXX-XXXX">
+              </div>
+              <div class="form-group">
+                <label for="tipo">Tipo de consulta</label>
+                <select id="tipo" name="tipo">
+                  <option value="">Seleccione una opción</option>
+                  <option>Información sobre servicios</option>
+                  <option>Solicitar cotización</option>
+                  <option>Propietario de un consorcio</option>
+                  <option>Emergencia en el edificio</option>
+                  <option>Otra consulta</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="mensaje">Mensaje</label>
+                <textarea id="mensaje" name="mensaje" placeholder="Cuéntenos sobre su consorcio y cómo podemos ayudarle..."></textarea>
+              </div>
+              <button type="submit" class="form-submit">Enviar consulta</button>
+            </div>
+            <div class="form-success" id="formSuccess">
+              <div class="success-icon">✓</div>
+              <h3>¡Mensaje recibido!</h3>
+              <p>Nos comunicaremos con usted a la brevedad.<br>Gracias por contactar a Guido Administración.</p>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================
+     FOOTER
+============================================ -->
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <img src="images/logo.png" alt="Guido Administración" onerror="this.style.display='none'">
+        <p>Administración profesional de consorcios en Buenos Aires. Transparencia, eficiencia y compromiso con cada edificio desde hace más de 10 años.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Navegación</h4>
+        <ul>
+          <li><a href="#quienes">Quiénes Somos</a></li>
+          <li><a href="#servicios">Servicios</a></li>
+          <li><a href="#resenas">Reseñas</a></li>
+          <li><a href="#mapa">Edificios</a></li>
+          <li><a href="#contacto">Contacto</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Servicios</h4>
+        <ul>
+          <li><a href="#servicios">Administración de Expensas</a></li>
+          <li><a href="#servicios">Gestión de Mantenimiento</a></li>
+          <li><a href="#servicios">Asesoramiento Legal</a></li>
+          <li><a href="#servicios">Mediación</a></li>
+          <li><a href="#servicios">Control de Proveedores</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Contacto</h4>
+        <ul>
+          <li><a href="tel:08102200066">0810 220 0066</a></li>
+          <li><a href="mailto:guido.consorcios@gmail.com">guido.consorcios@gmail.com</a></li>
+          <li><a href="https://www.instagram.com/guido.administracion" target="_blank" rel="noopener">Instagram</a></li>
+          <li><a href="https://wa.me/5491138166153" target="_blank" rel="noopener">WhatsApp</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 Guido Administración. Todos los derechos reservados.</p>
+      <div class="footer-socials">
+        <a href="https://www.instagram.com/guido.administracion" target="_blank" rel="noopener" class="footer-social-link" aria-label="Instagram">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+        </a>
+        <a href="https://wa.me/5491138166153" target="_blank" rel="noopener" class="footer-social-link" aria-label="WhatsApp">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+        </a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- Floating WhatsApp -->
+<a href="https://wa.me/5491138166153?text=Hola%2C%20quisiera%20m%C3%A1s%20informaci%C3%B3n%20sobre%20la%20administraci%C3%B3n%20de%20mi%20consorcio." class="float-wpp" target="_blank" rel="noopener" aria-label="WhatsApp">
+  <div class="float-wpp-pulse"></div>
+  <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+</a>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+// ============================================
+// THEME TOGGLE
+// ============================================
+const html = document.documentElement;
+const themeToggle = document.getElementById('themeToggle');
+const saved = localStorage.getItem('theme') || 'light';
+html.setAttribute('data-theme', saved);
+
+themeToggle.addEventListener('click', () => {
+  const current = html.getAttribute('data-theme');
+  const next = current === 'light' ? 'dark' : 'light';
+  const oldTile = currentTile();
+  html.setAttribute('data-theme', next);
+  localStorage.setItem('theme', next);
+  if (map) {
+    oldTile.remove();
+    currentTile().addTo(map);
+    map.invalidateSize();
+  }
+});
+
+// ============================================
+// HAMBURGER / MOBILE MENU
+// ============================================
+const hamburger = document.getElementById('hamburger');
+const mobileMenu = document.getElementById('mobileMenu');
+
+hamburger.addEventListener('click', () => {
+  hamburger.classList.toggle('open');
+  mobileMenu.classList.toggle('open');
+  document.body.style.overflow = mobileMenu.classList.contains('open') ? 'hidden' : '';
+});
+
+document.querySelectorAll('.mobile-link').forEach(link => {
+  link.addEventListener('click', () => {
+    hamburger.classList.remove('open');
+    mobileMenu.classList.remove('open');
+    document.body.style.overflow = '';
+  });
+});
+
+// ============================================
+// HERO CAROUSEL
+// ============================================
+const slides = document.querySelectorAll('.hero-slide');
+const indicatorsContainer = document.getElementById('heroIndicators');
+const counterEl = document.getElementById('heroCounter');
+let currentSlide = 0;
+let slideInterval;
+
+// Build indicators
+slides.forEach((_, i) => {
+  const dot = document.createElement('div');
+  dot.className = 'hero-dot' + (i === 0 ? ' active' : '');
+  dot.addEventListener('click', () => goToSlide(i));
+  indicatorsContainer.appendChild(dot);
+});
+
+function goToSlide(n) {
+  slides[currentSlide].classList.remove('active');
+  document.querySelectorAll('.hero-dot')[currentSlide].classList.remove('active');
+  currentSlide = (n + slides.length) % slides.length;
+  slides[currentSlide].classList.add('active');
+  document.querySelectorAll('.hero-dot')[currentSlide].classList.add('active');
+  counterEl.textContent = String(currentSlide + 1).padStart(2, '0') + ' / ' + String(slides.length).padStart(2, '0');
+}
+
+function nextSlide() { goToSlide(currentSlide + 1); }
+
+function startAuto() {
+  slideInterval = setInterval(nextSlide, 5500);
+}
+
+function stopAuto() { clearInterval(slideInterval); }
+
+startAuto();
+document.getElementById('heroCarousel').addEventListener('mouseenter', stopAuto);
+document.getElementById('heroCarousel').addEventListener('mouseleave', startAuto);
+
+// Touch swipe on hero
+let touchStartX = 0;
+document.getElementById('heroCarousel').addEventListener('touchstart', e => {
+  touchStartX = e.changedTouches[0].screenX;
+}, { passive: true });
+document.getElementById('heroCarousel').addEventListener('touchend', e => {
+  const diff = touchStartX - e.changedTouches[0].screenX;
+  if (Math.abs(diff) > 50) {
+    diff > 0 ? goToSlide(currentSlide + 1) : goToSlide(currentSlide - 1);
+  }
+}, { passive: true });
+
+// ============================================
+// STATS COUNTER ANIMATION
+// ============================================
+function animateCounter(el, target, suffix = '') {
+  const duration = 2000;
+  const start = performance.now();
+  function update(now) {
+    const progress = Math.min((now - start) / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    el.textContent = Math.floor(eased * target) + suffix;
+    if (progress < 1) requestAnimationFrame(update);
+    else el.textContent = target + suffix;
+  }
+  requestAnimationFrame(update);
+}
+
+const statsObserver = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      document.querySelectorAll('[data-target]').forEach(el => {
+        const target = parseInt(el.dataset.target);
+        const suffix = el.dataset.target === '98' ? '%' : '+';
+        animateCounter(el, target, suffix);
+      });
+      statsObserver.disconnect();
+    }
+  });
+}, { threshold: 0.3 });
+
+const statsStrip = document.querySelector('.stats-strip');
+if (statsStrip) statsObserver.observe(statsStrip);
+
+// ============================================
+// REVIEWS CAROUSEL
+// ============================================
+const track = document.getElementById('resenasTrack');
+let resenaPos = 0;
+
+function getStep() {
+  // card width + gap (24px) — card width comes from CSS flex calc, so read it live
+  const card = track.querySelector('.resena-card');
+  return card ? card.getBoundingClientRect().width + 24 : 368;
+}
+
+function getVisibleCount() {
+  const w = window.innerWidth;
+  if (w <= 480) return 1;
+  if (w < 1024) return 2;
+  return 3;
+}
+
+function maxPos() {
+  return track.children.length - getVisibleCount();
+}
+
+function moveTo(pos) {
+  resenaPos = Math.max(0, Math.min(pos, maxPos()));
+  track.style.transform = `translateX(-${resenaPos * getStep()}px)`;
+}
+
+document.getElementById('resenaNext').addEventListener('click', () => {
+  moveTo(resenaPos < maxPos() ? resenaPos + 1 : 0);
+});
+
+document.getElementById('resenaPrev').addEventListener('click', () => {
+  moveTo(resenaPos > 0 ? resenaPos - 1 : maxPos());
+});
+
+// Auto advance reviews
+setInterval(() => {
+  moveTo(resenaPos < maxPos() ? resenaPos + 1 : 0);
+}, 4500);
+
+// Touch swipe on reviews
+let rTouchX = 0;
+track.addEventListener('touchstart', e => { rTouchX = e.changedTouches[0].screenX; }, { passive: true });
+track.addEventListener('touchend', e => {
+  const diff = rTouchX - e.changedTouches[0].screenX;
+  if (Math.abs(diff) > 40) moveTo(diff > 0 ? resenaPos + 1 : resenaPos - 1);
+}, { passive: true });
+
+// Recalculate on resize (card widths change with breakpoints)
+window.addEventListener('resize', () => {
+  resenaPos = 0;
+  track.style.transition = 'none';
+  track.style.transform = 'translateX(0)';
+  requestAnimationFrame(() => { track.style.transition = ''; });
+}, { passive: true });
+
+// ============================================
+// LEAFLET MAP
+// ============================================
+let map;
+const TILE_ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
+let tileLight, tileDark;
+
+function buildTiles() {
+  tileLight = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    attribution: TILE_ATTR, subdomains: 'abcd', maxZoom: 20
+  });
+  tileDark = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: TILE_ATTR, subdomains: 'abcd', maxZoom: 20
+  });
+}
+
+function currentTile() {
+  return html.getAttribute('data-theme') === 'dark' ? tileDark : tileLight;
+}
+
+function initMap() {
+  buildTiles();
+  map = L.map('leaflet-map', {
+    center: [-34.595, -58.455],
+    zoom: 11,
+    zoomControl: true,
+    scrollWheelZoom: false
+  });
+
+  currentTile().addTo(map);
+
+  const buildingIcon = L.divIcon({
+    className: '',
+    html: `<div style="
+      width:36px;height:36px;border-radius:50% 50% 50% 0;
+      background:#1C2D4F;border:3px solid #B8962E;
+      transform:rotate(-45deg);
+      box-shadow:0 4px 12px rgba(28,45,79,0.4);
+    "></div>`,
+    iconSize: [36, 36],
+    iconAnchor: [18, 36],
+    popupAnchor: [0, -40]
+  });
+
+  const buildings = [
+    { lat: -34.6430828, lng: -58.5637268, name: 'Bolívar 273', address: 'Bolívar 273, Ramos Mejía' },
+    { lat: -34.5858177, lng: -58.4403170, name: 'Bonpland 1402', address: 'Bonpland 1402, Palermo' },
+    { lat: -34.5962378, lng: -58.4235300, name: 'Cabrera 4033', address: 'Cabrera 4033, Palermo' },
+    { lat: -34.5760216, lng: -58.4722550, name: 'Donado 1755', address: 'Donado 1755, Colegiales' },
+    { lat: -34.6186926, lng: -58.3871683, name: 'Estados Unidos 1491', address: 'Estados Unidos 1491, San Telmo' },
+    { lat: -34.5803186, lng: -58.4568054, name: 'Gregoria Pérez 3621', address: 'Gregoria Pérez 3621, Villa del Parque' },
+    { lat: -34.5975901, lng: -58.4303630, name: 'Jufré 153', address: 'Jufré 153, Villa Crespo' },
+    { lat: -34.6028645, lng: -58.3885262, name: 'Lavalle 1535/37', address: 'Lavalle 1535/37, Balvanera' },
+    { lat: -34.5561904, lng: -58.4791180, name: 'Melián 3522', address: 'Melián 3522, Saavedra' },
+    { lat: -34.5979670, lng: -58.3732083, name: 'Pje. Tres Sargentos 422', address: 'Pje. Tres Sargentos 422, Retiro' },
+    { lat: -34.5979661, lng: -58.3733788, name: 'Pje. Tres Sargentos 436', address: 'Pje. Tres Sargentos 436, Retiro' },
+    { lat: -34.5575573, lng: -58.4696179, name: 'Quesada 3043', address: 'Quesada 3043, Saavedra' },
+    { lat: -34.5966531, lng: -58.3742483, name: 'San Martín 965', address: 'San Martín 965, Retiro' },
+    { lat: -34.6005246, lng: -58.4139590, name: 'Sánchez de Bustamante 850', address: 'Sánchez de Bustamante 850, Palermo' },
+    { lat: -34.5796285, lng: -58.4342865, name: 'Soler 5768', address: 'Soler 5768, Palermo' },
+    { lat: -34.5978670, lng: -58.3729783, name: 'Tres Sargentos 401', address: 'Tres Sargentos 401, Retiro' },
+    { lat: -34.5194165, lng: -58.4858660, name: 'Av. Maipú 1901', address: 'Av. Maipú 1901, Vicente López' }
+  ];
+
+  buildings.forEach(b => {
+    const marker = L.marker([b.lat, b.lng], { icon: buildingIcon }).addTo(map);
+    marker.bindPopup(`
+      <div style="font-family:'DM Sans',sans-serif;min-width:180px;">
+        <div style="font-weight:700;font-size:0.95rem;color:#1C2D4F;margin-bottom:4px;">${b.name}</div>
+        <div style="font-size:0.82rem;color:#666;margin-bottom:6px;">${b.address}</div>
+        <div style="font-size:0.78rem;background:#B8962E;color:#fff;display:inline-block;padding:2px 10px;border-radius:50px;">Guido Administración</div>
+      </div>
+    `, { maxWidth: 240 });
+  });
+}
+
+window.addEventListener('load', initMap);
+
+// ============================================
+// SCROLL REVEAL
+// ============================================
+const revealObserver = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+    }
+  });
+}, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+document.querySelectorAll('.reveal, .reveal-left, .reveal-right').forEach(el => {
+  revealObserver.observe(el);
+});
+
+// ============================================
+// NAV SCROLL EFFECT
+// ============================================
+window.addEventListener('scroll', () => {
+  const nav = document.getElementById('nav');
+  if (window.scrollY > 60) {
+    nav.style.boxShadow = '0 2px 24px rgba(0,0,0,0.12)';
+  } else {
+    nav.style.boxShadow = 'none';
+  }
+}, { passive: true });
+
+// ============================================
+// FORM SUBMIT — Netlify Forms
+// ============================================
+const contactoForm = document.getElementById('contactoForm');
+if (contactoForm) {
+  contactoForm.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const btn = this.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.textContent = 'Enviando...';
+
+    try {
+      const res = await fetch('/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams(new FormData(this)).toString()
+      });
+
+      if (res.ok) {
+        document.getElementById('formFields').style.display = 'none';
+        document.getElementById('formSuccess').style.display = 'block';
+      } else {
+        throw new Error();
+      }
+    } catch {
+      btn.disabled = false;
+      btn.textContent = 'Enviar consulta';
+      alert('Hubo un error al enviar. Por favor intentá de nuevo o escribinos por WhatsApp.');
+    }
+  });
+}
+
+// ============================================
+// SECTION TAG – remove ::before on centered tags
+// ============================================
+document.querySelectorAll('.section-tag').forEach(tag => {
+  if (tag.closest('[style*="justify-content:center"]') ||
+      tag.closest('.servicios-header') ||
+      tag.closest('.mapa-header') ||
+      tag.closest('.resenas-header > div') === null) {
+    // handled by CSS
+  }
+});
+</script>
+</body>
+</html>
