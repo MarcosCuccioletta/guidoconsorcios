@@ -2552,10 +2552,11 @@ if (contactoForm) {
     btn.textContent = 'Enviando...';
 
     try {
+      const formData = new FormData(this);
       const res = await fetch('/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams(new FormData(this)).toString()
+        body: new URLSearchParams(formData).toString()
       });
 
       if (res.ok) {
