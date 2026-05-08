@@ -2143,6 +2143,7 @@
           <h3 class="form-title">Envíenos un mensaje</h3>
           <form id="contactoForm" name="contacto" method="POST" data-netlify="true" novalidate>
             <input type="hidden" name="form-name" value="contacto">
+            <input type="hidden" name="subject" value="Nueva consulta desde guidoconsorcios.netlify.app">
             <div id="formFields">
               <div class="form-row">
                 <div class="form-group">
@@ -2552,11 +2553,10 @@ if (contactoForm) {
     btn.textContent = 'Enviando...';
 
     try {
-      const formData = new FormData(this);
       const res = await fetch('/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams(formData).toString()
+        body: new URLSearchParams(new FormData(this)).toString()
       });
 
       if (res.ok) {
