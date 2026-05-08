@@ -2141,9 +2141,10 @@
       <div class="reveal-right">
         <div class="contact-form">
           <h3 class="form-title">Envíenos un mensaje</h3>
-          <form id="contactoForm" name="contacto" method="POST" data-netlify="true" novalidate>
-            <input type="hidden" name="form-name" value="contacto">
-            <input type="hidden" name="subject" value="Nueva consulta desde guidoconsorcios.netlify.app">
+          <form id="contactoForm" action="https://formsubmit.co/guido.consorcios@gmail.com" method="POST" novalidate>
+            <input type="hidden" name="_subject" value="Nueva consulta desde guidoconsorcios.netlify.app">
+            <input type="hidden" name="_captcha" value="false">
+            <input type="hidden" name="_template" value="table">
             <div id="formFields">
               <div class="form-row">
                 <div class="form-group">
@@ -2553,10 +2554,11 @@ if (contactoForm) {
     btn.textContent = 'Enviando...';
 
     try {
-      const res = await fetch('/', {
+      const data = Object.fromEntries(new FormData(this));
+      const res = await fetch('https://formsubmit.co/ajax/guido.consorcios@gmail.com', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams(new FormData(this)).toString()
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify(data)
       });
 
       if (res.ok) {
